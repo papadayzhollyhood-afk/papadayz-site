@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PAPA DAY Z - Official Site</title>
+  <style>
+    /* ============================================
+       RESET & BASE
+    ============================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --navy:   #0a1628;
+      --orange: #ff6b00;
+      --lime:   #8bc600;
+      --cream:  #f5f0e8;
+      --pink:   #e8004a;
+      --sky:    #0099cc;
+      --yellow: #ffcc00;
+      --dark:   #060e1a;
+    }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--navy);
+      font-family: Verdana, Geneva, sans-serif;
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+    /* ============================================
+       INTRO OVERLAY
+    ============================================ */
+    #intro {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--dark);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    #intro.hide { opacity: 0; pointer-events: none; }
+
+    /* Cassette shell */
+    .cassette {
+      width: 260px; height: 160px;
+      background: #1a1a2e;
+      border: 3px solid var(--orange);
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 0 30px var(--orange), inset 0 0 20px rgba(0,0,0,0.7);
+      animation: casAppear 0.6s ease both;
+    }
+    @keyframes casAppear {
+      from { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);     opacity: 1; }
+    }
+    /* Cassette window */
+    .cas-window {
+      position: absolute; top: 30px; left: 30px; right: 30px; bottom: 55px;
+      background: #000;
+      border: 2px solid #333;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 8px 20px;
+    }
+    /* Reels */
+    .reel {
+      width: 44px; height: 44px;
+      background: radial-gradient(circle at 35% 35%, #444, #111);
+      border: 3px solid var(--orange);
+      border-radius: 50%;
+      position: relative;
+      animation: spin 1.2s linear infinite;
+    }
+    .reel::after {
+      content: '';
+      position: absolute; inset: 8px;
+      background: transparent;
+      border: 2px solid var(--orange);
+      border-radius: 50%;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .reel.slow { animation-duration: 2.4s; }
+    /* Tape line */
+    .cas-window::before {
+      content: '';
+      position: absolute; left: 70px; right: 70px; top: 50%; height: 4px;
+      background: #4a3000;
+      transform: translateY(-50%);
+    }
+    /* Label on cassette */
+    .cas-label {
+      position: absolute; bottom: 10px; left: 14px; right: 14px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 14px; letter-spacing: 2px;
+      color: #000;
+      overflow: hidden;
+    }
+    .cas-label::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        90deg, transparent 0, transparent 8px, rgba(255,255,255,.12) 8px, rgba(255,255,255,.12) 9px
+      );
+    }
+    /* Tape holes */
+    .cas-hole {
+      position: absolute; width: 14px; height: 14px;
+      background: #000; border: 2px solid #555; border-radius: 50%;
+    }
+    .cas-hole.tl { top: 8px; left: 12px; }
+    .cas-hole.tr { top: 8px; right: 12px; }
+
+    /* Intro text */
+    .intro-text {
+      margin-top: 28px;
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 28px; letter-spacing: 4px;
+      color: var(--orange);
+      text-shadow: 0 0 20px var(--orange);
+      animation: blink 1s ease infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    .intro-sub {
+      margin-top: 10px;
+      font-size: 11px; letter-spacing: 6px;
+      color: var(--sky);
+      text-transform: uppercase;
+    }
+    /* Progress bar */
+    .load-bar-wrap {
+      margin-top: 22px; width: 260px; height: 14px;
+      border: 2px solid var(--orange);
+      border-radius: 3px;
+      background: #000;
+      overflow: hidden;
+    }
+    .load-bar {
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg, var(--orange) 0, var(--orange) 10px, var(--yellow) 10px, var(--yellow) 20px
+      );
+      width: 0%;
+      animation: loadFill 2.8s ease forwards 0.4s;
+    }
+    @keyframes loadFill { to { width: 100%; } }
+
+    /* SKIP btn */
+    #skipBtn {
+      position: fixed; bottom: 22px; right: 22px; z-index: 10000;
+      background: transparent; border: 2px solid var(--orange);
+      color: var(--orange); font-family: Verdana, sans-serif; font-size: 11px;
+      padding: 6px 16px; cursor: pointer; letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
+    }
+    #skipBtn:hover { background: var(--orange); color: #000; }
+
+    /* ============================================
+       MAIN WRAPPER (hidden during intro)
+    ============================================ */
+    #main { display: none; }
+    #main.show { display: block; }
+
+    /* ============================================
+       STARFIELD BG
+    ============================================ */
+    #stars {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--d, 3s) ease infinite var(--del, 0s);
+    }
+    @keyframes twinkle { 0%,100%{opacity:.2;} 50%{opacity:.9;} }
+
+    /* ============================================
+       HEADER / LOGO ZONE
+    ============================================ */
+    #site-header {
+      position: relative; z-index: 100;
+      background: linear-gradient(180deg, #02081a 0%, rgba(2,8,26,0.96) 100%);
+      border-bottom: 3px solid var(--orange);
+      padding: 0;
+      overflow: hidden;
+    }
+    .header-inner {
+      display: flex; align-items: center;
+      padding: 14px 24px;
+      gap: 20px;
+    }
+    /* Animated tape strip decoration */
+    .tape-strip {
+      height: 6px;
+      background: repeating-linear-gradient(
+        90deg, var(--orange) 0, var(--orange) 30px, var(--yellow) 30px, var(--yellow) 60px,
+        var(--lime) 60px, var(--lime) 90px, var(--sky) 90px, var(--sky) 120px,
+        var(--pink) 120px, var(--pink) 150px
+      );
+      animation: tapeMove 4s linear infinite;
+      background-size: 150px 100%;
+    }
+    @keyframes tapeMove { to { background-position: 150px 0; } }
+
+    /* Logo */
+    .logo-block {
+      flex: 0 0 auto;
+    }
+    .logo-main {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 48px; line-height: 1;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--orange) 0%, var(--yellow) 50%, var(--orange) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 12px var(--orange));
+      animation: logoPulse 2.5s ease infinite;
+    }
+    @keyframes logoPulse {
+      0%,100% { filter: drop-shadow(0 0 8px var(--orange)); }
+      50%      { filter: drop-shadow(0 0 22px var(--yellow)); }
+    }
+    .logo-sub {
+      font-size: 9px; letter-spacing: 8px;
+      color: var(--sky); text-transform: uppercase;
+      margin-top: 2px;
+    }
+    /* Mini cassette icon in header */
+    .header-cassette {
+      margin-left: auto;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .mini-social {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,107,0,.15);
+      border: 1px solid var(--orange);
+      border-radius: 3px;
+      padding: 4px 10px;
+      font-size: 10px; letter-spacing: 1px;
+      color: var(--orange);
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .mini-social:hover { background: var(--orange); color: #000; }
+    .mini-social .icon { font-size: 13px; }
+
+    /* ============================================
+       NAVIGATION (paper-cut tabs)
+    ============================================ */
+    #nav-bar {
+      position: relative; z-index: 90;
+      background: #0d1e3a;
+      border-bottom: 2px solid var(--sky);
+      display: flex; gap: 0;
+      padding: 0 16px;
+      overflow: hidden;
+    }
+    .nav-tab {
+      position: relative;
+      padding: 0 22px;
+      height: 44px;
+      display: flex; align-items: center;
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 13px; letter-spacing: 2px;
+      color: var(--cream);
+      cursor: pointer;
+      border: none; background: transparent;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      /* paper-cut bottom clip */
+      clip-path: polygon(0 0, 100% 0, 96% 100%, 4% 100%);
+    }
+    .nav-tab::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,107,0,0) 0%, rgba(255,107,0,0) 100%);
+      transition: background 0.2s;
+      clip-path: polygon(0 0, 100% 0, 96% 100%, 4% 100%);
+    }
+    .nav-tab:hover::before,
+    .nav-tab.active::before {
+      background: linear-gradient(180deg, var(--orange) 0%, #a84000 100%);
+    }
+    .nav-tab:hover, .nav-tab.active { color: #fff; }
+    .nav-tab span { position: relative; z-index: 1; }
+
+    /* Animate tabs in on load */
+    .nav-tab { animation: tabDrop 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+    .nav-tab:nth-child(1) { animation-delay: 0.05s; }
+    .nav-tab:nth-child(2) { animation-delay: 0.12s; }
+    .nav-tab:nth-child(3) { animation-delay: 0.19s; }
+    .nav-tab:nth-child(4) { animation-delay: 0.26s; }
+    .nav-tab:nth-child(5) { animation-delay: 0.33s; }
+    @keyframes tabDrop {
+      from { transform: translateY(-30px); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+
+    /* ============================================
+       CONTENT SECTIONS
+    ============================================ */
+    .section { display: none; position: relative; z-index: 10; }
+    .section.active { display: block; animation: fadeInSection 0.4s ease; }
+    @keyframes fadeInSection { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+    /* ============================================
+       HOME SECTION
+    ============================================ */
+    #sec-home {
+      min-height: calc(100vh - 110px);
+      padding: 0;
+    }
+    /* Hero banner */
+    .hero {
+      background: linear-gradient(135deg, #020b1c 0%, #0a1f3d 40%, #030d1e 100%);
+      border-bottom: 2px solid var(--orange);
+      padding: 40px 24px 30px;
+      display: flex; align-items: center; gap: 36px;
+      overflow: hidden; position: relative;
+    }
+    /* Scanlines overlay */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent 0, transparent 3px, rgba(0,0,0,.18) 3px, rgba(0,0,0,.18) 4px
+      );
+    }
+    /* animated grid glow */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        linear-gradient(var(--sky) 1px, transparent 1px) 0 0 / 60px 60px,
+        linear-gradient(90deg, var(--sky) 1px, transparent 1px) 0 0 / 60px 60px;
+      opacity: .04;
+      animation: gridScroll 6s linear infinite;
+    }
+    @keyframes gridScroll { to { background-position: 60px 60px, 60px 60px; } }
+
+    .hero-img {
+      flex: 0 0 auto;
+      width: 180px; height: 180px;
+      border-radius: 8px;
+      border: 3px solid var(--orange);
+      box-shadow: 0 0 25px var(--orange), 0 0 60px rgba(255,107,0,.3);
+      object-fit: cover;
+      position: relative; z-index: 1;
+      /* Placeholder gradient if no image */
+      background: linear-gradient(135deg, #1a3a5c, #0a1628);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero-img-inner {
+      width: 180px; height: 180px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #112244, #0a1628);
+      border: 3px solid var(--orange);
+      box-shadow: 0 0 25px var(--orange), 0 0 60px rgba(255,107,0,.3);
+      position: relative; z-index: 1;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Impact; font-size: 64px;
+      color: var(--orange); opacity: 0.6;
+    }
+
+    .hero-text { flex: 1; position: relative; z-index: 1; }
+    .hero-eyebrow {
+      font-size: 10px; letter-spacing: 5px;
+      color: var(--sky); text-transform: uppercase; margin-bottom: 8px;
+    }
+    .hero-name {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 52px; line-height: 1;
+      color: #fff;
+      text-shadow: 3px 3px 0 var(--orange), 0 0 30px var(--orange);
+      letter-spacing: 2px;
+    }
+    .hero-name span { color: var(--orange); }
+    .hero-tagline {
+      margin-top: 10px; font-size: 13px;
+      color: var(--lime); letter-spacing: 1px;
+      font-style: italic;
+    }
+    .hero-desc {
+      margin-top: 12px; font-size: 12px; line-height: 1.7;
+      color: #b0c0d8; max-width: 500px;
+    }
+    .hero-btns {
+      margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .btn {
+      padding: 9px 22px;
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 12px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none;
+      border: none; cursor: pointer;
+      display: inline-block;
+      transition: transform 0.12s, box-shadow 0.12s;
+      clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--orange); color: #000;
+      box-shadow: 0 4px 16px rgba(255,107,0,.5);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 24px rgba(255,107,0,.7); }
+    .btn-outline {
+      background: transparent; color: var(--sky);
+      border: 2px solid var(--sky);
+      clip-path: none;
+    }
+    .btn-outline:hover { background: var(--sky); color: #000; }
+
+    /* Scrolling ticker */
+    .ticker-wrap {
+      background: var(--orange);
+      padding: 6px 0;
+      overflow: hidden;
+      border-top: 2px solid var(--yellow);
+      border-bottom: 2px solid var(--yellow);
+    }
+    .ticker-inner {
+      display: flex; white-space: nowrap;
+      animation: tickerScroll 28s linear infinite;
+    }
+    .ticker-inner span {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 13px; letter-spacing: 2px;
+      color: #000; padding: 0 40px;
+    }
+    .ticker-inner span::before { content: '★ '; color: var(--navy); }
+    @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* Two-column layout */
+    .home-columns {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 0;
+      min-height: 60vh;
+    }
+    .home-main { padding: 24px; border-right: 2px solid #1a3050; }
+    .home-side  { padding: 20px; background: rgba(0,10,30,.5); }
+
+    /* ============================================
+       MUSIC SECTION — song cards
+    ============================================ */
+    .section-title {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 22px; letter-spacing: 3px;
+      color: var(--orange);
+      border-bottom: 2px solid var(--orange);
+      padding-bottom: 8px; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::before {
+      content: '▶';
+      color: var(--yellow); font-size: 14px;
+    }
+    .song-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .song-card {
+      background: linear-gradient(135deg, #0d1f38, #071428);
+      border: 2px solid #1a3a5c;
+      border-radius: 4px;
+      padding: 14px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+      cursor: pointer;
+    }
+    .song-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--orange), var(--yellow));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.25s;
+    }
+    .song-card:hover { border-color: var(--orange); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,107,0,.25); }
+    .song-card:hover::before { transform: scaleX(1); }
+    .song-year {
+      font-size: 9px; letter-spacing: 4px; color: var(--sky);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .song-title {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 18px; letter-spacing: 1px; color: #fff;
+    }
+    .song-card a {
+      display: inline-block; margin-top: 10px;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--orange); text-decoration: none;
+      border: 1px solid var(--orange); padding: 3px 10px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .song-card a:hover { background: var(--orange); color: #000; }
+
+    /* ============================================
+       VIDEO SECTION
+    ============================================ */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .video-card {
+      background: #0a1628;
+      border: 2px solid #1a3050;
+      border-radius: 4px; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .video-card:hover { border-color: var(--orange); transform: translateY(-4px); }
+    .video-thumb {
+      position: relative; width: 100%; padding-top: 56.25%;
+      background: #050e20; cursor: pointer; overflow: hidden;
+    }
+    /* Thumbnail image */
+    .video-thumb img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; border: none;
+      transition: transform 0.3s ease, opacity 0.3s;
+      display: block;
+    }
+    .video-thumb:hover img { transform: scale(1.04); opacity: 0.85; }
+    /* Play button overlay */
+    .play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2;
+    }
+    .play-btn {
+      width: 62px; height: 62px; border-radius: 50%;
+      background: rgba(255,107,0,0.92);
+      border: 3px solid #fff;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 24px rgba(255,107,0,0.7);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .video-thumb:hover .play-btn {
+      transform: scale(1.12);
+      background: var(--orange);
+    }
+    .play-btn::after {
+      content: '';
+      display: block;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 11px 0 11px 20px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 4px;
+    }
+    /* Loaded iframe */
+    .video-thumb iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+      z-index: 3;
+    }
+    .video-info {
+      padding: 12px;
+    }
+    .video-title {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 15px; color: #fff; letter-spacing: 1px;
+    }
+    .video-year { font-size: 10px; color: var(--sky); margin-top: 4px; }
+
+    /* ============================================
+       ABOUT SECTION
+    ============================================ */
+    .about-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+      align-items: start;
+    }
+    .about-bio {
+      font-size: 12px; line-height: 2;
+      color: #b0c0d8;
+    }
+    .about-bio p { margin-bottom: 14px; }
+    .about-bio strong { color: var(--orange); }
+    .fact-list {
+      list-style: none;
+      background: rgba(0,10,30,.7);
+      border: 2px solid var(--sky);
+      border-radius: 4px;
+      padding: 16px;
+    }
+    .fact-list li {
+      display: flex; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid rgba(0,153,204,.2);
+      font-size: 11px;
+    }
+    .fact-list li:last-child { border-bottom: none; }
+    .fact-key {
+      flex: 0 0 90px; font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 11px; letter-spacing: 1px; color: var(--orange);
+    }
+    .fact-val { color: var(--cream); }
+
+    /* ============================================
+       CONTACT / SOCIAL
+    ============================================ */
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px; margin-top: 10px;
+    }
+    .social-card {
+      display: block; text-decoration: none;
+      padding: 20px; text-align: center;
+      border: 2px solid var(--sky);
+      background: rgba(0,153,204,.08);
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+      border-radius: 4px;
+    }
+    .social-card:hover {
+      background: rgba(0,153,204,.22);
+      border-color: var(--yellow);
+      transform: translateY(-4px);
+    }
+    .social-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+    .social-platform {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 16px; letter-spacing: 2px; color: var(--orange);
+      display: block;
+    }
+    .social-handle { font-size: 11px; color: var(--sky); margin-top: 4px; display: block; }
+
+    /* ============================================
+       PAPER CUT DECORATIONS
+    ============================================ */
+    .paper-cut {
+      position: relative;
+      margin: 20px 0;
+    }
+    .paper-cut::before, .paper-cut::after {
+      content: '';
+      display: block; height: 18px;
+      background: var(--cream);
+    }
+    .paper-cut::before {
+      clip-path: polygon(0 100%, 3% 0, 6% 100%, 9% 0, 12% 100%, 15% 0, 18% 100%, 21% 0,
+                          24% 100%, 27% 0, 30% 100%, 33% 0, 36% 100%, 39% 0, 42% 100%,
+                          45% 0, 48% 100%, 51% 0, 54% 100%, 57% 0, 60% 100%, 63% 0,
+                          66% 100%, 69% 0, 72% 100%, 75% 0, 78% 100%, 81% 0, 84% 100%,
+                          87% 0, 90% 100%, 93% 0, 96% 100%, 100% 0, 100% 100%);
+      opacity: .1; background: var(--orange);
+    }
+    .paper-cut::after {
+      clip-path: polygon(0 0, 3% 100%, 6% 0, 9% 100%, 12% 0, 15% 100%, 18% 0, 21% 100%,
+                          24% 0, 27% 100%, 30% 0, 33% 100%, 36% 0, 39% 100%, 42% 0,
+                          45% 100%, 48% 0, 51% 100%, 54% 0, 57% 100%, 60% 0, 63% 100%,
+                          66% 0, 69% 100%, 72% 0, 75% 100%, 78% 0, 81% 100%, 84% 0,
+                          87% 100%, 90% 0, 93% 100%, 96% 0, 100% 100%, 100% 0);
+      opacity: .1; background: var(--sky);
+      margin-top: 2px;
+    }
+
+    /* ============================================
+       SIDEBAR WIDGETS
+    ============================================ */
+    .widget {
+      background: rgba(0,10,30,.7);
+      border: 2px solid #1a3a5c;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .widget-header {
+      background: linear-gradient(90deg, var(--navy), #0d2040);
+      border-bottom: 2px solid var(--orange);
+      padding: 8px 12px;
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 12px; letter-spacing: 2px; color: var(--orange);
+    }
+    .widget-body { padding: 12px; }
+
+    /* ============================================
+       WINAMP PLAYER
+    ============================================ */
+    .winamp {
+      background: #232323;
+      border: 2px solid #444;
+      border-radius: 3px;
+      font-family: 'Arial', sans-serif;
+      font-size: 11px;
+      user-select: none;
+      box-shadow: 2px 2px 8px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.07);
+      margin-bottom: 0;
+    }
+    /* Title bar */
+    .wa-titlebar {
+      background: linear-gradient(180deg, #3a5a9a 0%, #1a3a7a 40%, #0e2a6a 100%);
+      padding: 3px 6px 3px 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #0a1a4a;
+      cursor: default;
+    }
+    .wa-title-text {
+      font-family: 'Arial', sans-serif; font-size: 9px; font-weight: bold;
+      color: #c8d8ff; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .wa-winbtns { display: flex; gap: 2px; }
+    .wa-winbtn {
+      width: 14px; height: 11px;
+      background: linear-gradient(180deg, #4a6aaa, #2a4a8a);
+      border: 1px solid #0a2a6a;
+      border-bottom-color: #0a1a50;
+      font-size: 7px; color: #c8d8ff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 1px;
+    }
+    .wa-winbtn:hover { background: linear-gradient(180deg, #6a8aff, #4a6add); }
+    .wa-winbtn:active { background: #2a3a7a; }
+    /* Display area */
+    .wa-display {
+      background: #000f00;
+      padding: 6px 8px 5px;
+      border-bottom: 1px solid #111;
+    }
+    /* Track name marquee */
+    .wa-trackname {
+      background: #000f00;
+      overflow: hidden; white-space: nowrap;
+      height: 14px; margin-bottom: 5px;
+      border: 1px solid #001500;
+    }
+    .wa-trackname-inner {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      font-size: 11px; color: #00e000;
+      font-weight: bold;
+      letter-spacing: 1px;
+      animation: wampScroll 10s linear infinite;
+      padding-left: 100%;
+    }
+    @keyframes wampScroll { from { transform: translateX(0); } to { transform: translateX(-200%); } }
+    /* Time display */
+    .wa-time-row {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 5px;
+    }
+    .wa-time {
+      font-family: 'Courier New', monospace;
+      font-size: 20px; color: #00cc00;
+      font-weight: bold; letter-spacing: 3px;
+      text-shadow: 0 0 6px #00cc00;
+      line-height: 1;
+    }
+    .wa-badges {
+      display: flex; flex-direction: column; gap: 2px; margin-left: auto;
+    }
+    .wa-badge {
+      font-family: 'Courier New', monospace;
+      font-size: 8px; color: #00aa00;
+      letter-spacing: 1px;
+    }
+    .wa-badge.active { color: #00ee00; text-shadow: 0 0 4px #00ee00; }
+    /* Visualizer bars */
+    .wa-viz {
+      display: flex; align-items: flex-end; gap: 1px; height: 24px;
+      margin-bottom: 4px;
+    }
+    .wa-vizbar {
+      flex: 1; background: #00bb00;
+      min-height: 2px;
+      transition: height 0.08s ease;
+    }
+    /* Spectrum colors */
+    .wa-vizbar:nth-child(-n+5)  { background: #00dd00; }
+    .wa-vizbar:nth-child(n+6):nth-child(-n+12) { background: #aacc00; }
+    .wa-vizbar:nth-child(n+13) { background: #ddaa00; }
+    /* Progress bar */
+    .wa-seekbar-wrap {
+      background: #003000; height: 6px; border: 1px solid #002000;
+      border-radius: 1px; overflow: visible; position: relative; cursor: pointer;
+    }
+    .wa-seekbar-fill {
+      height: 100%; background: linear-gradient(90deg, #00cc00, #00ff44);
+      width: 0%; transition: width 0.5s linear;
+      position: relative;
+    }
+    .wa-seekbar-fill::after {
+      content: '';
+      position: absolute; right: -3px; top: -3px;
+      width: 7px; height: 12px;
+      background: #c8d8ff;
+      border: 1px solid #6888cc;
+      border-radius: 1px;
+    }
+    /* Volume + Balance */
+    .wa-sliders {
+      display: flex; gap: 8px; margin-top: 5px; align-items: center;
+    }
+    .wa-slider-label {
+      font-family: 'Courier New', monospace;
+      font-size: 8px; color: #006600; letter-spacing: 1px;
+      flex: 0 0 auto;
+    }
+    .wa-slider {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; background: #003000; border: 1px solid #002000;
+      border-radius: 1px; cursor: pointer; outline: none;
+    }
+    .wa-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 10px; height: 14px;
+      background: linear-gradient(180deg, #c8d8ff, #8899cc);
+      border: 1px solid #4466aa; border-radius: 1px; cursor: pointer;
+    }
+    /* Controls row */
+    .wa-controls {
+      background: #1e1e1e;
+      padding: 5px 8px;
+      display: flex; align-items: center; gap: 3px;
+      border-bottom: 1px solid #111;
+    }
+    .wa-btn {
+      background: linear-gradient(180deg, #484848, #2e2e2e);
+      border: 1px solid #585858;
+      border-bottom-color: #1a1a1a;
+      color: #c8c8c8;
+      font-size: 10px; font-weight: bold;
+      padding: 3px 7px; cursor: pointer;
+      border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s, transform 0.05s;
+      min-width: 26px; height: 22px;
+      letter-spacing: 0;
+    }
+    .wa-btn:hover { background: linear-gradient(180deg, #585858, #3e3e3e); color: #fff; }
+    .wa-btn:active { background: #1e1e1e; transform: translateY(1px); border-color: #333; }
+    .wa-btn.wa-play { color: #00ee00; }
+    .wa-btn.wa-pause { color: #ffcc00; }
+    .wa-btn.wa-stop { color: #ff4444; }
+    .wa-btn-spacer { flex: 1; }
+    /* Shuffle / Repeat */
+    .wa-toggles { display: flex; gap: 4px; }
+    .wa-toggle {
+      background: #1a1a1a; border: 1px solid #333;
+      color: #666; font-size: 8px; font-family: 'Courier New', monospace;
+      padding: 2px 5px; cursor: pointer; border-radius: 2px;
+      letter-spacing: 1px; transition: color 0.15s, border-color 0.15s;
+    }
+    .wa-toggle.on { color: #00cc00; border-color: #00aa00; }
+    /* Playlist */
+    .wa-playlist {
+      background: #000a00; border-top: 1px solid #002a00;
+    }
+    .wa-pl-header {
+      background: linear-gradient(180deg, #1a4a1a, #0a2a0a);
+      padding: 3px 8px;
+      font-family: 'Courier New', monospace; font-size: 9px;
+      color: #00aa00; letter-spacing: 2px;
+      border-bottom: 1px solid #002a00;
+      display: flex; justify-content: space-between;
+    }
+    .wa-pl-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 8px;
+      font-family: 'Courier New', monospace; font-size: 10px;
+      color: #006600; cursor: pointer;
+      border-bottom: 1px solid #001500;
+      transition: background 0.1s, color 0.1s;
+    }
+    .wa-pl-item:hover { background: #001a00; color: #00cc00; }
+    .wa-pl-item.wa-pl-active { background: #002000; color: #00ee00; }
+    .wa-pl-num { flex: 0 0 16px; text-align: right; font-size: 9px; color: #005500; }
+    .wa-pl-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wa-pl-active .wa-pl-num { color: #00bb00; }
+
+    /* Legacy wk-btn kept for any stray references — now invisible */
+    .wk-btn { display: none; }
+    .walkman-display { display: none; }
+    .walkman-controls { display: none; }
+
+    /* sp-track-link styles removed — playlist now inside Winamp widget */
+
+    /* ============================================
+       FLOATING CASSETTE DECORATION
+    ============================================ */
+    .float-cas {
+      position: fixed; bottom: 30px; left: 20px; z-index: 200;
+      width: 70px; height: 44px;
+      background: #1a1a2e;
+      border: 2px solid var(--orange);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 4px 8px;
+      box-shadow: 0 0 14px rgba(255,107,0,.4);
+      animation: floatBob 3s ease-in-out infinite;
+      cursor: pointer;
+    }
+    @keyframes floatBob { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-6px) rotate(2deg);} }
+    .float-cas .fr {
+      width: 16px; height: 16px;
+      border: 2px solid var(--orange);
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+    }
+
+    /* ============================================
+       FOOTER
+    ============================================ */
+    #site-footer {
+      position: relative; z-index: 100;
+      background: #02060f;
+      border-top: 3px solid var(--orange);
+      padding: 20px 24px;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: 22px; color: var(--orange); letter-spacing: 3px;
+    }
+    .footer-copy { font-size: 10px; color: #4a6080; margin-top: 8px; letter-spacing: 1px; }
+    .footer-links { margin-top: 10px; display: flex; justify-content: center; gap: 20px; }
+    .footer-links a {
+      font-size: 10px; color: var(--sky); text-decoration: none; letter-spacing: 1px;
+    }
+    .footer-links a:hover { color: var(--orange); }
+
+    /* ============================================
+       GENERAL SECTION PADDING
+    ============================================ */
+    .sec-pad { padding: 28px 24px; }
+
+    /* ============================================
+       RESPONSIVE
+    ============================================ */
+    @media (max-width: 700px) {
+      .hero { flex-direction: column; padding: 20px 14px; }
+      .hero-name { font-size: 36px; }
+      .home-columns { grid-template-columns: 1fr; }
+      .about-wrap { grid-template-columns: 1fr; }
+      .logo-main { font-size: 32px; }
+      .mini-social { display: none; }
+      .home-side { display: none; }
+    }
+
+    /* ============================================
+       CURSOR SPARKLE
+    ============================================ */
+    .spark {
+      position: fixed; pointer-events: none; z-index: 99999;
+      width: 6px; height: 6px; border-radius: 50%;
+      animation: sparkFade 0.7s ease forwards;
+    }
+    @keyframes sparkFade { to { transform: translateY(-20px) scale(0); opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<!-- ======== INTRO ======== -->
+<div id="intro">
+  <div class="cassette">
+    <div class="cas-hole tl"></div>
+    <div class="cas-hole tr"></div>
+    <div class="cas-window">
+      <div class="reel"></div>
+      <div class="reel slow"></div>
+    </div>
+    <div class="cas-label">PAPA DAY Z</div>
+  </div>
+  <div class="intro-text">LOADING...</div>
+  <div class="intro-sub">muzica &amp; comedie — romania</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar" id="loadBar"></div>
+  </div>
+</div>
+<button id="skipBtn" onclick="skipIntro()">SKIP INTRO ▶</button>
+
+<!-- ======== STARFIELD ======== -->
+<div id="stars"></div>
+
+<!-- ======== MAIN SITE ======== -->
+<div id="main">
+
+  <!-- HEADER -->
+  <div class="tape-strip"></div>
+  <header id="site-header">
+    <div class="header-inner">
+      <div class="logo-block">
+        <div class="logo-main">PAPA DAY Z</div>
+        <div class="logo-sub">Official Website · Muzica &amp; Comedie</div>
+      </div>
+      <div class="header-cassette">
+        <a class="mini-social" href="https://www.instagram.com/papadayz/" target="_blank" rel="noopener">
+          <span class="icon">📷</span> @papadayz
+        </a>
+        <a class="mini-social" href="https://www.tiktok.com/@papa_day_z" target="_blank" rel="noopener">
+          <span class="icon">🎵</span> @papa_day_z
+        </a>
+        <a class="mini-social" href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener">
+          <span class="icon">▶</span> YouTube
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav id="nav-bar">
+    <button class="nav-tab active" onclick="showSection('home', this)"><span>HOME</span></button>
+    <button class="nav-tab" onclick="showSection('music', this)"><span>MUZICA</span></button>
+    <button class="nav-tab" onclick="showSection('videos', this)"><span>VIDEOS</span></button>
+    <button class="nav-tab" onclick="showSection('about', this)"><span>DESPRE</span></button>
+    <button class="nav-tab" onclick="showSection('contact', this)"><span>CONTACT</span></button>
+  </nav>
+
+  <!-- ======== HOME ======== -->
+  <div id="sec-home" class="section active">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-img-inner" aria-label="Papa Day Z">🎤</div>
+      <div class="hero-text">
+        <div class="hero-eyebrow">Romania · Hip-Hop / Rap / Comedie</div>
+        <div class="hero-name"><span>PAPA</span> DAY Z</div>
+        <div class="hero-tagline">„Muzica si comedie din Romania"</div>
+        <div class="hero-desc">
+          Artistul roman care a explodat pe social media cu un stil unic — rap cu umor, energie pura si
+          bune vibratii direct din strada. Cunoscut pentru hiturile
+          <strong style="color:var(--orange)">PUFF DADDY</strong>,
+          <strong style="color:var(--orange)">BENGAVEZ</strong> si
+          <strong style="color:var(--orange)">UGA BUGA</strong>.
+        </div>
+        <div class="hero-btns">
+          <a class="btn btn-primary" href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ ASCULTA PE SPOTIFY</a>
+          <a class="btn btn-outline" href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener">▶ YOUTUBE</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticker -->
+    <div class="ticker-wrap">
+      <div class="ticker-inner">
+        <span>PUFF DADDY</span><span>BENGAVEZ</span><span>UGA BUGA</span>
+        <span>LA FEMEI</span><span>BECMEN</span><span>DANGER</span>
+        <span>NOT CHRIS</span><span>VENEZUELA</span><span>LASA FITI VOI BAIETI</span>
+        <span>STAI LINISTIT</span>
+        <!-- duplicate for seamless loop -->
+        <span>PUFF DADDY</span><span>BENGAVEZ</span><span>UGA BUGA</span>
+        <span>LA FEMEI</span><span>BECMEN</span><span>DANGER</span>
+        <span>NOT CHRIS</span><span>VENEZUELA</span><span>LASA FITI VOI BAIETI</span>
+        <span>STAI LINISTIT</span>
+      </div>
+    </div>
+
+    <!-- Two columns -->
+    <div class="home-columns">
+      <div class="home-main">
+        <div class="section-title">ULTIMELE LANASARI</div>
+
+        <div class="song-grid">
+          <div class="song-card">
+            <div class="song-year">2026 · SINGLE</div>
+            <div class="song-title">VENEZUELA</div>
+            <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ ASCULTA</a>
+          </div>
+          <div class="song-card">
+            <div class="song-year">2026 · SINGLE</div>
+            <div class="song-title">LA FEMEI</div>
+            <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ ASCULTA</a>
+          </div>
+          <div class="song-card">
+            <div class="song-year">2026 · SINGLE</div>
+            <div class="song-title">UGA BUGA</div>
+            <a href="https://open.spotify.com/track/5GjZOB97Kx3ytmThQ930Kq" target="_blank" rel="noopener">▶ ASCULTA</a>
+          </div>
+          <div class="song-card">
+            <div class="song-year">2026 · SINGLE</div>
+            <div class="song-title">BENGAVEZ</div>
+            <a href="https://www.youtube.com/watch?v=0Oury9gwUjI" target="_blank" rel="noopener">▶ ASCULTA</a>
+          </div>
+        </div>
+
+        <div class="paper-cut"></div>
+
+        <div class="section-title">VIDEOCLIPURI</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="video-card">
+            <div class="video-thumb" onclick="loadVideo(this,'M-Vt2WcASk0','Papa Day Z - PUFF DADDY (bine proportionati)')">
+              <img src="https://img.youtube.com/vi/M-Vt2WcASk0/hqdefault.jpg" alt="Papa Day Z - PUFF DADDY thumbnail" />
+              <div class="play-overlay"><div class="play-btn"></div></div>
+            </div>
+            <div class="video-info">
+              <div class="video-title">PUFF DADDY</div>
+              <div class="video-year">Decembrie 2025</div>
+            </div>
+          </div>
+          <div class="video-card">
+            <div class="video-thumb" onclick="loadVideo(this,'0Oury9gwUjI','Papa Day Z - BENGAVEZ')">
+              <img src="https://img.youtube.com/vi/0Oury9gwUjI/hqdefault.jpg" alt="Papa Day Z - BENGAVEZ thumbnail" />
+              <div class="play-overlay"><div class="play-btn"></div></div>
+            </div>
+            <div class="video-info">
+              <div class="video-title">BENGAVEZ</div>
+              <div class="video-year">Martie 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="home-side">
+        <!-- NOW PLAYING widget — walkman skin cu Spotify embed real -->
+        <div class="widget">
+          <div class="widget-header">🎧 NOW PLAYING</div>
+          <div class="widget-body">
+
+            <!-- WINAMP PLAYER -->
+            <div class="winamp" id="winamp">
+
+              <!-- Title bar -->
+              <div class="wa-titlebar">
+                <span class="wa-title-text">WINAMP</span>
+                <div class="wa-winbtns">
+                  <div class="wa-winbtn">_</div>
+                  <div class="wa-winbtn">□</div>
+                  <div class="wa-winbtn">×</div>
+                </div>
+              </div>
+
+              <!-- Display -->
+              <div class="wa-display">
+                <div class="wa-trackname">
+                  <span class="wa-trackname-inner" id="wa-trackname">PAPA DAY Z &mdash; PUFF DADDY</span>
+                </div>
+                <div class="wa-time-row">
+                  <div class="wa-time" id="wa-time">0:00</div>
+                  <div class="wa-badges">
+                    <span class="wa-badge active" id="wa-badge-play">&#9654; PLAY</span>
+                    <span class="wa-badge" id="wa-badge-kbps">192 KBPS</span>
+                    <span class="wa-badge">44KHZ</span>
+                  </div>
+                </div>
+                <!-- Visualizer -->
+                <div class="wa-viz" id="wa-viz">
+                  <div class="wa-vizbar" style="height:40%"></div>
+                  <div class="wa-vizbar" style="height:70%"></div>
+                  <div class="wa-vizbar" style="height:55%"></div>
+                  <div class="wa-vizbar" style="height:90%"></div>
+                  <div class="wa-vizbar" style="height:75%"></div>
+                  <div class="wa-vizbar" style="height:60%"></div>
+                  <div class="wa-vizbar" style="height:85%"></div>
+                  <div class="wa-vizbar" style="height:50%"></div>
+                  <div class="wa-vizbar" style="height:95%"></div>
+                  <div class="wa-vizbar" style="height:65%"></div>
+                  <div class="wa-vizbar" style="height:80%"></div>
+                  <div class="wa-vizbar" style="height:45%"></div>
+                  <div class="wa-vizbar" style="height:70%"></div>
+                  <div class="wa-vizbar" style="height:35%"></div>
+                  <div class="wa-vizbar" style="height:55%"></div>
+                  <div class="wa-vizbar" style="height:88%"></div>
+                  <div class="wa-vizbar" style="height:62%"></div>
+                  <div class="wa-vizbar" style="height:75%"></div>
+                </div>
+                <!-- Seek bar -->
+                <div class="wa-seekbar-wrap" id="wa-seekbar" title="Seek">
+                  <div class="wa-seekbar-fill" id="wa-seekfill"></div>
+                </div>
+                <!-- Volume + Balance -->
+                <div class="wa-sliders">
+                  <span class="wa-slider-label">VOL</span>
+                  <input type="range" class="wa-slider" id="wa-vol" min="0" max="100" value="80" title="Volume">
+                  <span class="wa-slider-label">BAL</span>
+                  <input type="range" class="wa-slider" id="wa-bal" min="-50" max="50" value="0" title="Balance">
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="wa-controls">
+                <button class="wa-btn" id="wa-prev" title="Previous">&#9664;&#9664;</button>
+                <button class="wa-btn wa-play" id="wa-play" title="Play">&#9654;</button>
+                <button class="wa-btn wa-pause" id="wa-pause" title="Pause">&#9646;&#9646;</button>
+                <button class="wa-btn wa-stop" id="wa-stop" title="Stop">&#9632;</button>
+                <button class="wa-btn" id="wa-next" title="Next">&#9654;&#9654;</button>
+                <span class="wa-btn-spacer"></span>
+                <div class="wa-toggles">
+                  <button class="wa-toggle" id="wa-shuf" title="Shuffle">SHF</button>
+                  <button class="wa-toggle" id="wa-rep" title="Repeat">REP</button>
+                </div>
+              </div>
+
+              <!-- Native audio element — controlled entirely by Winamp JS -->
+              <audio id="wa-audio" preload="none"></audio>
+
+              <!-- Playlist -->
+              <div class="wa-playlist">
+                <div class="wa-pl-header">
+                  <span>PLAYLIST</span>
+                  <span id="wa-pl-count">4 tracks</span>
+                </div>
+                <div id="wa-pl-list">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+
+            </div><!-- /.winamp -->
+
+            <!-- Track list managed by Winamp JS below -->
+
+          </div>
+        </div>
+
+        <!-- Social counts -->
+        <div class="widget">
+          <div class="widget-header">📊 FOLLOW</div>
+          <div class="widget-body" style="display:flex;flex-direction:column;gap:8px;">
+            <a href="https://www.instagram.com/papadayz/" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:8px;border:1px solid #1a3a5c;color:var(--cream);transition:border-color .2s;"
+               onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='#1a3a5c'">
+              <span style="font-size:20px;">📷</span>
+              <div>
+                <div style="font-family:Impact;font-size:12px;letter-spacing:1px;color:var(--orange);">INSTAGRAM</div>
+                <div style="font-size:10px;color:var(--sky);">@papadayz</div>
+              </div>
+            </a>
+            <a href="https://www.tiktok.com/@papa_day_z" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:8px;border:1px solid #1a3a5c;color:var(--cream);transition:border-color .2s;"
+               onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='#1a3a5c'">
+              <span style="font-size:20px;">🎵</span>
+              <div>
+                <div style="font-family:Impact;font-size:12px;letter-spacing:1px;color:var(--orange);">TIKTOK</div>
+                <div style="font-size:10px;color:var(--sky);">@papa_day_z</div>
+              </div>
+            </a>
+            <a href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:8px;border:1px solid #1a3a5c;color:var(--cream);transition:border-color .2s;"
+               onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='#1a3a5c'">
+              <span style="font-size:20px;">▶</span>
+              <div>
+                <div style="font-family:Impact;font-size:12px;letter-spacing:1px;color:var(--orange);">YOUTUBE</div>
+                <div style="font-size:10px;color:var(--sky);">@papadayzofficial</div>
+              </div>
+            </a>
+            <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener"
+               style="display:flex;align-items:center;gap:10px;text-decoration:none;padding:8px;border:1px solid #1a3a5c;color:var(--cream);transition:border-color .2s;"
+               onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='#1a3a5c'">
+              <span style="font-size:20px;">🎧</span>
+              <div>
+                <div style="font-family:Impact;font-size:12px;letter-spacing:1px;color:var(--orange);">SPOTIFY</div>
+                <div style="font-size:10px;color:var(--sky);">11.4K monthly listeners</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="widget">
+          <div class="widget-header">🏷 TAGS</div>
+          <div class="widget-body" style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="background:rgba(255,107,0,.15);border:1px solid var(--orange);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--orange);">rapromania</span>
+            <span style="background:rgba(255,107,0,.15);border:1px solid var(--orange);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--orange);">trapromania</span>
+            <span style="background:rgba(0,153,204,.15);border:1px solid var(--sky);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--sky);">hip-hop</span>
+            <span style="background:rgba(0,153,204,.15);border:1px solid var(--sky);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--sky);">comedie</span>
+            <span style="background:rgba(139,198,0,.15);border:1px solid var(--lime);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--lime);">Romania</span>
+            <span style="background:rgba(139,198,0,.15);border:1px solid var(--lime);padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--lime);">viral</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== MUZICA ======== -->
+  <div id="sec-music" class="section sec-pad">
+    <div class="section-title">DISCOGRAFIE</div>
+    <div class="song-grid">
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">VENEZUELA</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">Mai 2026</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">LA FEMEI</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">2026</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">UGA BUGA</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">Aprilie 2026</div>
+        <a href="https://open.spotify.com/track/5GjZOB97Kx3ytmThQ930Kq" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">BENGAVEZ</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">Martie 2026</div>
+        <a href="https://www.youtube.com/watch?v=0Oury9gwUjI" target="_blank" rel="noopener">▶ YOUTUBE</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">BECMEN</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">2026</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2025 · SINGLE</div>
+        <div class="song-title">PUFF DADDY</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">Decembrie 2025 · Offside Music</div>
+        <a href="https://open.spotify.com/album/4hh87QBKHq9mFEh7ccYDuz" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2025 · SINGLE</div>
+        <div class="song-title">DANGER</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">2025</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2024 · SINGLE</div>
+        <div class="song-title">STAI LINISTIT</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">feat. MK MAO · 2024</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2024 · SINGLE</div>
+        <div class="song-title">LASA FITI VOI BAIETI</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">2024</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · FEAT.</div>
+        <div class="song-title">POATE HM</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">feat. Papa Day Z (Luca Lee) · 2026</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+      <div class="song-card">
+        <div class="song-year">2026 · SINGLE</div>
+        <div class="song-title">NOT CHRIS</div>
+        <div style="font-size:10px;color:#7090b0;margin-top:6px;">2026</div>
+        <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">▶ SPOTIFY</a>
+      </div>
+    </div>
+
+    <div class="paper-cut" style="margin:30px 0;"></div>
+
+    <div style="text-align:center;padding:20px;">
+      <a class="btn btn-primary" href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">
+        🎧 TOATE MELODIILE PE SPOTIFY
+      </a>
+    </div>
+  </div>
+
+  <!-- ======== VIDEOS ======== -->
+  <div id="sec-videos" class="section sec-pad">
+    <div class="section-title">VIDEOCLIPURI</div>
+    <div class="video-grid">
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'M-Vt2WcASk0','Papa Day Z - PUFF DADDY (bine proportionati)')">
+          <img src="https://img.youtube.com/vi/M-Vt2WcASk0/hqdefault.jpg" alt="Papa Day Z - PUFF DADDY thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">PUFF DADDY (bine proportionati)</div>
+          <div class="video-year">18 Decembrie 2025</div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'KZADBNUaca8','Papa Day Z - LA FEMEI')">
+          <img src="https://img.youtube.com/vi/KZADBNUaca8/hqdefault.jpg" alt="Papa Day Z - LA FEMEI thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">LA FEMEI</div>
+          <div class="video-year">14 Ianuarie 2026</div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'0Oury9gwUjI','Papa Day Z - BENGAVEZ')">
+          <img src="https://img.youtube.com/vi/0Oury9gwUjI/hqdefault.jpg" alt="Papa Day Z - BENGAVEZ thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">BENGAVEZ</div>
+          <div class="video-year">1 Martie 2026</div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'e8qTl9y6u64','Papa Day Z - UGA BUGA')">
+          <img src="https://img.youtube.com/vi/e8qTl9y6u64/hqdefault.jpg" alt="Papa Day Z - UGA BUGA thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">UGA BUGA</div>
+          <div class="video-year">2026</div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'JKMCnzDuDw0','Papa Day Z - BECMEN')">
+          <img src="https://img.youtube.com/vi/JKMCnzDuDw0/hqdefault.jpg" alt="Papa Day Z - BECMEN thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">BECMEN</div>
+          <div class="video-year">30 Ianuarie 2026</div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-thumb" onclick="loadVideo(this,'vFQ-DmsAgbs','Papa Day Z - VENEZUELA')">
+          <img src="https://img.youtube.com/vi/vFQ-DmsAgbs/hqdefault.jpg" alt="Papa Day Z - VENEZUELA thumbnail" />
+          <div class="play-overlay"><div class="play-btn"></div></div>
+        </div>
+        <div class="video-info">
+          <div class="video-title">VENEZUELA</div>
+          <div class="video-year">2026</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:30px;text-align:center;">
+      <a class="btn btn-primary" href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener">
+        ▶ TOATE VIDEOCLIPURILE PE YOUTUBE
+      </a>
+    </div>
+  </div>
+
+  <!-- ======== DESPRE ======== -->
+  <div id="sec-about" class="section sec-pad">
+    <div class="section-title">DESPRE PAPA DAY Z</div>
+    <div class="about-wrap">
+      <div class="about-bio">
+        <p>
+          <strong>Papa Day Z</strong> este un artist roman de hip-hop si comedie, cunoscut pentru
+          stilul sau unic care imbina muzica rap cu umorul autentic romanesc.
+          Canalul sau principal pe YouTube este descris ca <strong>„muzica si comedie"</strong>,
+          reflectand perfect personalitatea sa artistica.
+        </p>
+        <p>
+          Cu un sound care amesteca influente din <strong>rapromania</strong> si <strong>trapromania</strong>,
+          Papa Day Z a reusit sa construiasca o comunitate fidela pe platforme precum
+          Instagram, TikTok, YouTube si Spotify, unde numara mii de ascultatori lunari.
+        </p>
+        <p>
+          Hiturile sale — de la <strong>PUFF DADDY</strong> (lansat prin Offside Music in Decembrie 2025)
+          la <strong>BENGAVEZ</strong>, <strong>UGA BUGA</strong> si <strong>VENEZUELA</strong> — au circulat
+          rapid pe retelele sociale, aducandu-i o vizibilitate considerabila in scena muzicala
+          romaneasca independenta.
+        </p>
+        <p>
+          Pe langa muzica proprie, Papa Day Z a colaborat cu artisti precum <strong>MK MAO</strong>
+          (pe piesa „Stai Linistit") si a aparut in colaborari cu alti artisti romani emergenti.
+        </p>
+      </div>
+      <ul class="fact-list">
+        <li><span class="fact-key">ARTIST</span><span class="fact-val">Papa Day Z</span></li>
+        <li><span class="fact-key">ORIGINE</span><span class="fact-val">Romania</span></li>
+        <li><span class="fact-key">GENURI</span><span class="fact-val">Hip-Hop, Rap, Comedie</span></li>
+        <li><span class="fact-key">ACTIV</span><span class="fact-val">2024 — prezent</span></li>
+        <li><span class="fact-key">LABEL</span><span class="fact-val">Offside Music (dist.)</span></li>
+        <li><span class="fact-key">SPOTIFY</span><span class="fact-val">11.4K ascultatori/luna</span></li>
+        <li><span class="fact-key">INSTAGRAM</span><span class="fact-val">@papadayz</span></li>
+        <li><span class="fact-key">TIKTOK</span><span class="fact-val">@papa_day_z</span></li>
+        <li><span class="fact-key">YOUTUBE</span><span class="fact-val">@papadayzofficial</span></li>
+        <li><span class="fact-key">TAGS</span><span class="fact-val">rapromania, trapromania, detroitromania</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ======== CONTACT ======== -->
+  <div id="sec-contact" class="section sec-pad">
+    <div class="section-title">CONTACT &amp; SOCIAL MEDIA</div>
+    <div class="social-grid">
+      <a class="social-card" href="https://www.instagram.com/papadayz/" target="_blank" rel="noopener">
+        <span class="social-icon">📷</span>
+        <span class="social-platform">INSTAGRAM</span>
+        <span class="social-handle">@papadayz</span>
+      </a>
+      <a class="social-card" href="https://www.tiktok.com/@papa_day_z" target="_blank" rel="noopener">
+        <span class="social-icon">🎵</span>
+        <span class="social-platform">TIKTOK</span>
+        <span class="social-handle">@papa_day_z</span>
+      </a>
+      <a class="social-card" href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener">
+        <span class="social-icon">▶</span>
+        <span class="social-platform">YOUTUBE</span>
+        <span class="social-handle">@papadayzofficial</span>
+      </a>
+      <a class="social-card" href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">
+        <span class="social-icon">🎧</span>
+        <span class="social-platform">SPOTIFY</span>
+        <span class="social-handle">Papa Day Z</span>
+      </a>
+    </div>
+
+    <div class="paper-cut" style="margin:30px 0;"></div>
+
+    <div style="text-align:center;padding:10px;">
+      <div style="font-family:Impact,'Arial Black',sans-serif;font-size:14px;letter-spacing:4px;color:var(--sky);margin-bottom:8px;">
+        PENTRU BOOKING &amp; COLABORARI
+      </div>
+      <div style="font-size:12px;color:#7090b0;">
+        Contacteaza-l prin retelele sociale de mai sus.
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="tape-strip"></div>
+  <footer id="site-footer">
+    <div class="footer-logo">PAPA DAY Z</div>
+    <div class="footer-copy">© 2026 Papa Day Z · Toate drepturile rezervate · Romania</div>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/papadayz/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.tiktok.com/@papa_day_z" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://www.youtube.com/@PAPADAYZOFFICIAL" target="_blank" rel="noopener">YouTube</a>
+      <a href="https://open.spotify.com/artist/0zZjOFENe8EPeOxD7EywKS" target="_blank" rel="noopener">Spotify</a>
+    </div>
+  </footer>
+
+</div><!-- /#main -->
+
+<!-- Floating mini cassette -->
+<div class="float-cas" title="Papa Day Z - muzica si comedie">
+  <div class="fr"></div>
+  <div class="fr" style="animation-duration:2s;"></div>
+</div>
+
+<script>
+  /* ============================================
+     STARFIELD
+  ============================================ */
+  (function() {
+    var container = document.getElementById('stars');
+    var colors = ['#fff','#0099cc','#ff6b00','#ffcc00','#8bc600'];
+    for (var i = 0; i < 120; i++) {
+      var s = document.createElement('div');
+      s.className = 'star';
+      var size = Math.random() * 2.5 + 0.5;
+      s.style.cssText = [
+        'width:' + size + 'px',
+        'height:' + size + 'px',
+        'left:' + (Math.random() * 100) + '%',
+        'top:' + (Math.random() * 100) + '%',
+        '--d:' + (Math.random() * 4 + 2) + 's',
+        '--del:' + (Math.random() * 4) + 's',
+        'background:' + colors[Math.floor(Math.random() * colors.length)]
+      ].join(';');
+      container.appendChild(s);
+    }
+  })();
+
+  /* ============================================
+     INTRO LOGIC
+  ============================================ */
+  function skipIntro() {
+    var intro = document.getElementById('intro');
+    var main  = document.getElementById('main');
+    var skip  = document.getElementById('skipBtn');
+    intro.classList.add('hide');
+    setTimeout(function() {
+      intro.style.display = 'none';
+      skip.style.display = 'none';
+      main.classList.add('show');
+    }, 820);
+  }
+
+  // Auto-dismiss after load bar + small delay
+  setTimeout(skipIntro, 3600);
+
+  /* ============================================
+     NAV TABS
+  ============================================ */
+  function showSection(id, btn) {
+    // hide all sections
+    var sections = document.querySelectorAll('.section');
+    sections.forEach(function(s) { s.classList.remove('active'); });
+    // deactivate all tabs
+    var tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    // show target
+    var target = document.getElementById('sec-' + id);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  /* ============================================
+     CURSOR SPARKLES
+  ============================================ */
+  var sparkColors = ['#ff6b00','#ffcc00','#0099cc','#8bc600','#e8004a'];
+  document.addEventListener('mousemove', function(e) {
+    if (Math.random() > 0.85) {
+      var sp = document.createElement('div');
+      sp.className = 'spark';
+      sp.style.cssText = [
+        'left:' + e.clientX + 'px',
+        'top:' + e.clientY + 'px',
+        'background:' + sparkColors[Math.floor(Math.random() * sparkColors.length)]
+      ].join(';');
+      document.body.appendChild(sp);
+      setTimeout(function() { sp.remove(); }, 700);
+    }
+  });
+
+  /* ============================================
+     CLICK-TO-PLAY VIDEO
+  ============================================ */
+  function loadVideo(thumbEl, videoId, title) {
+    // Remove thumbnail and overlay, inject iframe
+    var iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+    iframe.title = title;
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('allow', 'autoplay; encrypted-media');
+    // Clear the thumb container and append iframe
+    thumbEl.innerHTML = '';
+    thumbEl.appendChild(iframe);
+    thumbEl.style.cursor = 'default';
+    thumbEl.onclick = null;
+  }
+  /* ============================================
+     WINAMP PLAYER — native audio, fișiere locale
+     Pune fișierele MP3 în folderul /audio/ din repo
+  ============================================ */
+  (function() {
+    var playlist = [
+      { name: 'PUFF DADDY', file: 'audio/puff-daddy.mp3' },
+      { name: 'LA FEMEI',   file: 'audio/la-femei.mp3'   },
+      { name: 'BENGAVEZ',   file: 'audio/bengavez.mp3'   },
+      { name: 'UGA BUGA',   file: 'audio/uga-buga.mp3'   },
+      { name: 'BECMEN',     file: 'audio/becmen.mp3'      },
+      { name: 'VENEZUELA',  file: 'audio/venezuela.mp3'   }
+    ];
+
+    var current   = 0;
+    var shuffle   = false;
+    var repeat    = false;
+    var vizRef    = null;
+    var seeking   = false;
+
+    // DOM refs
+    var audio     = document.getElementById('wa-audio');
+    var trackname = document.getElementById('wa-trackname');
+    var timeEl    = document.getElementById('wa-time');
+    var badgePlay = document.getElementById('wa-badge-play');
+    var badgeKbps = document.getElementById('wa-badge-kbps');
+    var seekFill  = document.getElementById('wa-seekfill');
+    var seekbar   = document.getElementById('wa-seekbar');
+    var volSlider = document.getElementById('wa-vol');
+    var btnPrev   = document.getElementById('wa-prev');
+    var btnPlay   = document.getElementById('wa-play');
+    var btnPause  = document.getElementById('wa-pause');
+    var btnStop   = document.getElementById('wa-stop');
+    var btnNext   = document.getElementById('wa-next');
+    var btnShuf   = document.getElementById('wa-shuf');
+    var btnRep    = document.getElementById('wa-rep');
+    var plList    = document.getElementById('wa-pl-list');
+    var plCount   = document.getElementById('wa-pl-count');
+    var vizBars   = document.querySelectorAll('.wa-vizbar');
+
+    // ---- Playlist UI ----
+    function buildPlaylist() {
+      plList.innerHTML = '';
+      playlist.forEach(function(t, i) {
+        var row = document.createElement('div');
+        row.className = 'wa-pl-item' + (i === current ? ' wa-pl-active' : '');
+        row.innerHTML =
+          '<span class="wa-pl-num">' + (i + 1) + '</span>' +
+          '<span class="wa-pl-name">Papa Day Z \u2014 ' + t.name + '</span>';
+        row.addEventListener('click', function() { setTrack(i, true); });
+        plList.appendChild(row);
+      });
+      if (plCount) plCount.textContent = playlist.length + ' tracks';
+    }
+
+    function refreshPlaylistHighlight() {
+      var rows = plList.querySelectorAll('.wa-pl-item');
+      rows.forEach(function(r, i) { r.classList.toggle('wa-pl-active', i === current); });
+    }
+
+    // ---- Track loading ----
+    function setTrack(idx, andPlay) {
+      current = ((idx % playlist.length) + playlist.length) % playlist.length;
+      var t = playlist[current];
+      audio.src = t.file;
+      audio.load();
+      if (trackname) trackname.textContent = 'PAPA DAY Z \u2014 ' + t.name;
+      if (badgeKbps) badgeKbps.textContent = '128 KBPS';
+      updateTime(0, 0);
+      updateSeek(0);
+      refreshPlaylistHighlight();
+      if (andPlay) audio.play().catch(function(){});
+    }
+
+    // ---- Time display ----
+    function formatTime(s) {
+      s = Math.floor(s || 0);
+      var m = Math.floor(s / 60);
+      var ss = s % 60;
+      return m + ':' + (ss < 10 ? '0' : '') + ss;
+    }
+    function updateTime(cur, dur) {
+      if (timeEl) timeEl.textContent = formatTime(cur);
+    }
+    function updateSeek(pct) {
+      if (seekFill) seekFill.style.width = Math.min(pct, 100) + '%';
+    }
+
+    // ---- Visualizer ----
+    function startViz() {
+      stopViz();
+      vizRef = setInterval(function() {
+        vizBars.forEach(function(bar) {
+          bar.style.height = (Math.random() * 85 + 10) + '%';
+        });
+      }, 90);
+    }
+    function stopViz() {
+      if (vizRef) { clearInterval(vizRef); vizRef = null; }
+      vizBars.forEach(function(bar) { bar.style.height = '8%'; });
+    }
+
+    // ---- Audio events ----
+    audio.addEventListener('play', function() {
+      if (badgePlay) { badgePlay.textContent = '\u25BA PLAY'; badgePlay.classList.add('active'); }
+      startViz();
+    });
+    audio.addEventListener('pause', function() {
+      if (badgePlay) { badgePlay.textContent = '\u23F8 PAUSE'; badgePlay.classList.remove('active'); }
+      stopViz();
+    });
+    audio.addEventListener('ended', function() {
+      stopViz();
+      if (repeat) {
+        audio.currentTime = 0;
+        audio.play().catch(function(){});
+      } else {
+        var next = shuffle
+          ? Math.floor(Math.random() * playlist.length)
+          : current + 1;
+        if (next >= playlist.length) {
+          // end of playlist — stop
+          if (badgePlay) { badgePlay.textContent = '\u25A0 STOP'; badgePlay.classList.remove('active'); }
+          updateTime(0, 0);
+          updateSeek(0);
+        } else {
+          setTrack(next, true);
+        }
+      }
+    });
+    audio.addEventListener('timeupdate', function() {
+      if (seeking) return;
+      var cur = audio.currentTime;
+      var dur = audio.duration || 0;
+      updateTime(cur, dur);
+      if (dur > 0) updateSeek((cur / dur) * 100);
+    });
+    audio.addEventListener('durationchange', function() {
+      // duration now known — badge shows real kbps if available
+    });
+    audio.addEventListener('error', function() {
+      if (trackname) trackname.textContent = 'EROARE \u2014 fisier lipsa: ' + playlist[current].file;
+      stopViz();
+    });
+
+    // ---- Volume ----
+    if (volSlider) {
+      audio.volume = volSlider.value / 100;
+      volSlider.addEventListener('input', function() {
+        audio.volume = this.value / 100;
+      });
+    }
+
+    // ---- Seekbar ----
+    if (seekbar) {
+      seekbar.addEventListener('mousedown', function() { seeking = true; });
+      seekbar.addEventListener('click', function(e) {
+        var rect = seekbar.getBoundingClientRect();
+        var pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        if (audio.duration) {
+          audio.currentTime = pct * audio.duration;
+          updateSeek(pct * 100);
+        }
+        seeking = false;
+      });
+    }
+
+    // ---- Controls ----
+    if (btnPlay) btnPlay.addEventListener('click', function() {
+      if (!audio.src || audio.src === window.location.href) setTrack(current, true);
+      else audio.play().catch(function(){});
+    });
+    if (btnPause) btnPause.addEventListener('click', function() {
+      if (audio.paused) audio.play().catch(function(){});
+      else audio.pause();
+    });
+    if (btnStop) btnStop.addEventListener('click', function() {
+      audio.pause();
+      audio.currentTime = 0;
+      updateTime(0, 0);
+      updateSeek(0);
+      if (badgePlay) { badgePlay.textContent = '\u25A0 STOP'; badgePlay.classList.remove('active'); }
+      stopViz();
+    });
+    if (btnPrev) btnPrev.addEventListener('click', function() {
+      // se dă click pe prev în primele 3 sec → track anterior; altfel restart
+      var wasPlaying = !audio.paused;
+      if (audio.currentTime > 3) {
+        audio.currentTime = 0;
+      } else {
+        var prev = shuffle ? Math.floor(Math.random() * playlist.length) : current - 1;
+        setTrack(prev, wasPlaying);
+      }
+    });
+    if (btnNext) btnNext.addEventListener('click', function() {
+      var wasPlaying = !audio.paused;
+      var next = shuffle ? Math.floor(Math.random() * playlist.length) : current + 1;
+      setTrack(next, wasPlaying);
+    });
+
+    // ---- Shuffle / Repeat ----
+    if (btnShuf) btnShuf.addEventListener('click', function() {
+      shuffle = !shuffle;
+      btnShuf.classList.toggle('on', shuffle);
+    });
+    if (btnRep) btnRep.addEventListener('click', function() {
+      repeat = !repeat;
+      btnRep.classList.toggle('on', repeat);
+    });
+
+    // ---- Init ----
+    buildPlaylist();
+    // Încarcă primul track fără autoplay (browserele blochează autoplay fără interacțiune)
+    audio.src = playlist[0].file;
+    if (trackname) trackname.textContent = 'PAPA DAY Z \u2014 ' + playlist[0].name;
+  })();
+</script>
+</body>
+</html>
